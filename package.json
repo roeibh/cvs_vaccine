@@ -11,9 +11,12 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
+    "dotenv": "^8.2.0",
     "log-timestamp": "^0.3.0",
     "puppeteer": "^7.1.0",
-    "telegram-bot-api": "^2.0.1"
+    "reflect-metadata": "^0.1.13",
+    "telegram-bot-api": "^2.0.1",
+    "tsyringe": "^4.4.0"
   },
   "devDependencies": {
     "@types/jquery": "^3.5.5",
