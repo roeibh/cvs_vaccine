@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "dotenv": "^8.2.0",
+    "envalid": "^7.0.0",
     "log-timestamp": "^0.3.0",
     "puppeteer": "^7.1.0",
     "reflect-metadata": "^0.1.13",

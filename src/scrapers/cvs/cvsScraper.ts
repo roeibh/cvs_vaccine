@@ -21,7 +21,7 @@ export class CvsScraper extends ScraperBase {
             console.log("GA vaccine availability response received");
             const jsonData = (await response.json()) as CVSResponse;
             jsonData.responsePayloadData?.data.GA.forEach(async (location: LocationDetails) => {
-                if (Number(location.totalAvailable) > 0) {
+                if (Number(location.totalAvailable) === 0) {
                     console.log(`There are available slots in ${location.city}`);
                     this.publisher.publish(`There are available slots in ${location.city}.\nGo quickly and register: ${vaccineWebsite}`);
                 }
