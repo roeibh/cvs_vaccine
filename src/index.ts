@@ -16,26 +16,17 @@ async function mainLoop(ms: number) {
     try {
       const browser = await puppeteer.launch();
       const page = await browser.newPage();
-      let jsonData: CVSResponse = {};
-      page.on("response", async (response) => {
-        if (
-          response.url() ===
-          "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.GA.json?vaccineinfo"
-        ) {
-          console.log("Ga vaccine availability response received");
-          jsonData = (await response.json()) as CVSResponse;
-        }
-      });
 
       await page.goto("https://www.cvs.com/immunizations/covid-19-vaccine", {
         waitUntil: "domcontentloaded",
       });
 
       await page.evaluate(() => $("span:contains('Georgia')")[0]?.click());
-      await page.waitForResponse(
+      const response = await page.waitForResponse(
         "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.GA.json?vaccineinfo"
       );
-      await delay(1000);
+      console.log("Ga vaccine availability response received");
+      const jsonData = (await response.json()) as CVSResponse;
       jsonData.responsePayloadData?.data.GA.forEach(
         async (location: GaLocation) => {
           if (Number(location.totalAvailable) > 0) {
@@ -68,6 +59,6 @@ async function mainLoop(ms: number) {
   }
 }
 
-mainLoop(1000 * 60 * 30 /*run every 30 minutes*/).catch((err) =>
+mainLoop(1000 * 60 * 10 /*run every 10 minutes*/).catch((err) =>
   console.error(err)
 );
