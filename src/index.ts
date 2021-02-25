@@ -5,7 +5,7 @@ import "reflect-metadata";
 import { container } from "tsyringe";
 import { IPublisher } from "./interfaces/IPublisher.d";
 import { IScraper } from "./interfaces/IScraper";
-import { TelegramPublisher as TelegramPublisher } from "./publishers/telegram/telegram";
+import { TelegramPublisher as TelegramPublisher } from "./publishers/telegram";
 import { CvsScraper } from "./scrapers/cvs/cvsScraper";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -15,11 +15,12 @@ require("log-timestamp")(() => {
 });
 
 container.register<IPublisher>("IPublisher", TelegramPublisher);
+// container.register<IPublisher>("IPublisher", ConsolePublisher);
 container.register<IScraper>("IScraper", CvsScraper);
 
 async function main() {
     const scraper = container.resolve<IScraper>("IScraper");
-    const job = schedule.scheduleJob("Scrape Job", "* */5 * * * *", async () => {
+    const job = schedule.scheduleJob("Scrape Job", "*/10 * * * *", async () => {
         await scraper.scrape();
     });
 

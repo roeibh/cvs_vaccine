@@ -1,8 +1,8 @@
 import axios from "axios";
 import { singleton } from "tsyringe";
-import { IPublisher } from "../../interfaces/IPublisher";
-import config from "../../config/config";
-import { Utilities } from "../../utilities";
+import { IPublisher } from "../interfaces/IPublisher";
+import config from "../config/config";
+import { Utilities } from "../utilities";
 
 @singleton()
 export class TelegramPublisher implements IPublisher {
