@@ -6,6 +6,7 @@ import { IPublisher } from "../../interfaces/IPublisher";
 @singleton()
 export class CvsScraper {
     constructor(@inject("IPublisher") protected publisher: IPublisher) {}
+    private previousLocationDetails = "";
 
     public async scrape(): Promise<void> {
         const vaccineWebsite = "https://www.cvs.com/immunizations/covid-19-vaccine";
@@ -22,6 +23,9 @@ export class CvsScraper {
             const response = await page.waitForResponse(`${vaccineWebsite}.vaccine-status.GA.json?vaccineinfo`, { timeout: 3000 });
             console.log("GA vaccine availability response received");
             const jsonData = (await response.json()) as CVSResponse;
+            const currentAvailability = JSON.stringify(jsonData.responsePayloadData?.data.GA);
+            if (currentAvailability === this.previousLocationDetails) return;
+            this.previousLocationDetails = currentAvailability;
             jsonData.responsePayloadData?.data.GA.forEach(async (location: LocationDetails) => {
                 if (location.status !== "Fully Booked") {
                     console.log(`There are available slots in ${location.city}`);
