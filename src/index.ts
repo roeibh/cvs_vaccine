@@ -1,12 +1,12 @@
 import * as dotenv from "dotenv";
 dotenv.config(); // Make sure this run first
+import schedule from "node-schedule";
 import "reflect-metadata";
 import { container } from "tsyringe";
 import { IPublisher } from "./interfaces/IPublisher.d";
 import { IScraper } from "./interfaces/IScraper";
 import { TelegramPublisher as TelegramPublisher } from "./publishers/telegram/telegram";
 import { CvsScraper } from "./scrapers/cvs/cvsScraper";
-import { Utilities } from "./utilities";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("log-timestamp")(() => {
@@ -14,16 +14,26 @@ require("log-timestamp")(() => {
     return `[${date.toLocaleDateString()} ${date.toLocaleTimeString()}]`;
 });
 
-container.register<IScraper>("IScraper", CvsScraper);
 container.register<IPublisher>("IPublisher", TelegramPublisher);
+container.register<IScraper>("IScraper", CvsScraper);
 
-async function mainLoop(ms: number) {
+async function main() {
     const scraper = container.resolve<IScraper>("IScraper");
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        await scraper.Scrape();
-        await Utilities.delay(ms);
-    }
+    const job = schedule.scheduleJob("Scrape Job", "* */5 * * * *", async () => {
+        await scraper.scrape();
+    });
+
+    job.on("scheduled", () => {
+        console.info("Job scheduled Successfully");
+    });
+
+    job.on("run", () => {
+        console.info("Job Executed Successfully");
+    });
+
+    job.on("error", () => {
+        console.error("Job Failed");
+    });
 }
 
-mainLoop(1000 * 60 * 10 /*run every 10 minutes*/).catch((err) => console.error(err));
+main();

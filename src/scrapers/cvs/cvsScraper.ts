@@ -1,11 +1,12 @@
 import puppeteer from "puppeteer";
-import { singleton } from "tsyringe";
+import { inject, singleton } from "tsyringe";
 import { CVSResponse, LocationDetails } from "./cvsResponse";
-import { ScraperBase } from "../scraperBase";
+import { IPublisher } from "../../interfaces/IPublisher";
 
 @singleton()
-export class CvsScraper extends ScraperBase {
-    public async Scrape(): Promise<void> {
+export class CvsScraper {
+    constructor(@inject("IPublisher") protected publisher: IPublisher) {}
+    public async scrape(): Promise<void> {
         const vaccineWebsite = "https://www.cvs.com/immunizations/covid-19-vaccine";
 
         try {
@@ -21,7 +22,7 @@ export class CvsScraper extends ScraperBase {
             console.log("GA vaccine availability response received");
             const jsonData = (await response.json()) as CVSResponse;
             jsonData.responsePayloadData?.data.GA.forEach(async (location: LocationDetails) => {
-                if (Number(location.totalAvailable) === 0) {
+                if (Number(location.totalAvailable) >= 0) {
                     console.log(`There are available slots in ${location.city}`);
                     this.publisher.publish(`There are available slots in ${location.city}.\nGo quickly and register: ${vaccineWebsite}`);
                 }

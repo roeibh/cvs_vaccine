@@ -1,3 +1,3 @@
 export interface IScraper {
-    public Scrape(): Promise<void>;
+    public scrape(): Promise<void>;
 }
