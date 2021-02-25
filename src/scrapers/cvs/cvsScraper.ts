@@ -6,6 +6,7 @@ import { IPublisher } from "../../interfaces/IPublisher";
 @singleton()
 export class CvsScraper {
     constructor(@inject("IPublisher") protected publisher: IPublisher) {}
+
     public async scrape(): Promise<void> {
         const vaccineWebsite = "https://www.cvs.com/immunizations/covid-19-vaccine";
 
@@ -18,15 +19,17 @@ export class CvsScraper {
             });
 
             await page.evaluate(() => $("span:contains('Georgia')")[0]?.click());
-            const response = await page.waitForResponse(`${vaccineWebsite}.vaccine-status.GA.json?vaccineinfo`);
+            const response = await page.waitForResponse(`${vaccineWebsite}.vaccine-status.GA.json?vaccineinfo`, { timeout: 3000 });
             console.log("GA vaccine availability response received");
             const jsonData = (await response.json()) as CVSResponse;
             jsonData.responsePayloadData?.data.GA.forEach(async (location: LocationDetails) => {
-                if (Number(location.totalAvailable) >= 0) {
+                if (location.status !== "Fully Booked") {
                     console.log(`There are available slots in ${location.city}`);
-                    this.publisher.publish(`There are available slots in ${location.city}.\nGo quickly and register: ${vaccineWebsite}`);
+                    await this.publisher.publish(`There are available slots in ${location.city}.\nGo quickly and register: ${vaccineWebsite}`);
                 }
             });
+            const pages = await browser.pages();
+            await Promise.all(pages.map((page) => page.close()));
             await browser.close();
         } catch (err) {
             if (err instanceof Error) {

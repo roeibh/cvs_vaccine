@@ -1,3 +1,3 @@
 export interface IPublisher {
-    public publish(text: string): Promise<void>;
+    public async publish(text: string): Promise<void>;
 }
