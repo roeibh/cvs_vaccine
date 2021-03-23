@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import { launch, Browser, Page } from "puppeteer";
 import { inject, singleton } from "tsyringe";
 import { CVSResponse, LocationDetails } from "./cvsResponse";
 import { IPublisher } from "../../interfaces/IPublisher";
@@ -10,11 +10,9 @@ export class CvsScraper {
 
     public async scrape(): Promise<void> {
         const vaccineWebsite = "https://www.cvs.com/immunizations/covid-19-vaccine";
-
+        const browser: Browser = await launch();
+        const page: Page = await browser.newPage();
         try {
-            const browser = await puppeteer.launch();
-            const page = await browser.newPage();
-
             await page.goto(vaccineWebsite, {
                 waitUntil: "domcontentloaded",
             });
@@ -26,14 +24,19 @@ export class CvsScraper {
             const currentAvailability = jsonData.responsePayloadData?.data.GA;
             if (currentAvailability === undefined || JSON.stringify(currentAvailability) === JSON.stringify(this.previousLocationDetails)) return;
             jsonData.responsePayloadData?.data.GA.forEach(async (location: LocationDetails) => {
-                if (location.status !== "Fully Booked" && this.previousLocationDetails.find((l: LocationDetails) => l.city === location.city)?.status === "Fully Booked") {
+                if (
+                    location.status !== "Fully Booked" &&
+                    (this.previousLocationDetails.length === 0 ||
+                        !this.previousLocationDetails.find((l: LocationDetails) => l.city === location.city)?.status ||
+                        this.previousLocationDetails.find((l: LocationDetails) => l.city === location.city)?.status === "Fully Booked")
+                ) {
                     console.log(`There are available slots in ${location.city}`);
                     await this.publisher.publish(`There are available slots in ${location.city}.\nGo quickly and register: ${vaccineWebsite}`);
                 }
             });
             this.previousLocationDetails = JSON.parse(JSON.stringify(currentAvailability)); // copy array by value
             const pages = await browser.pages();
-            await Promise.all(pages.map((page) => page.close()));
+            pages.forEach(async (p) => await p.close());
             await browser.close();
         } catch (err) {
             if (err instanceof Error) {
@@ -42,6 +45,9 @@ export class CvsScraper {
             } else {
                 console.error(err);
             }
+            await browser.close();
+        } finally {
+            await browser.close();
         }
     }
 }
