@@ -2,10 +2,11 @@ import { launch, Browser, Page } from "puppeteer";
 import { inject, singleton } from "tsyringe";
 import { CVSResponse, LocationDetails } from "./cvsResponse";
 import { IPublisher } from "../../interfaces/IPublisher";
+import { TelegramPublisher } from "../../publishers/telegram";
 
 @singleton()
 export class CvsScraper {
-    constructor(@inject("IPublisher") protected publisher: IPublisher) {}
+    constructor(@inject(TelegramPublisher.name) protected publisher: IPublisher) {}
     private previousLocationDetails: LocationDetails[] = [];
 
     public async scrape(): Promise<void> {

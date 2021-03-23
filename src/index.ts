@@ -5,8 +5,11 @@ import "reflect-metadata";
 import { container } from "tsyringe";
 import { IPublisher } from "./interfaces/IPublisher.d";
 import { IScraper } from "./interfaces/IScraper";
-import { TelegramPublisher as TelegramPublisher } from "./publishers/telegram";
+import { ConsolePublisher } from "./publishers/console";
+import { TelegramPublisher } from "./publishers/telegram";
+import { TwilioPublisher } from "./publishers/twilio";
 import { CvsScraper } from "./scrapers/cvs/cvsScraper";
+import { NhsScraper } from "./scrapers/nhs/nhsScraper";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("log-timestamp")(() => {
@@ -14,22 +17,25 @@ require("log-timestamp")(() => {
     return `[${date.toLocaleDateString()} ${date.toLocaleTimeString()}]`;
 });
 
-container.register<IPublisher>("IPublisher", TelegramPublisher);
-// container.register<IPublisher>("IPublisher", ConsolePublisher);
-container.register<IScraper>("IScraper", CvsScraper);
+container.register<IPublisher>(TelegramPublisher.name, TelegramPublisher);
+container.register<IPublisher>(ConsolePublisher.name, ConsolePublisher);
+container.register<IPublisher>(TwilioPublisher.name, TwilioPublisher);
+container.register<IScraper>(CvsScraper.name, CvsScraper);
+container.register<IScraper>(NhsScraper.name, NhsScraper);
 
 async function main() {
-    const scraper = container.resolve<IScraper>("IScraper");
-    const job = schedule.scheduleJob("Scrape Job", "*/10 * * * *", async () => {
-        await scraper.scrape();
-    });
+    const scrappers: IScraper[] = [
+        container.resolve<IScraper>(CvsScraper.name),
+        container.resolve<IScraper>(NhsScraper.name)
+    ];
+    // await Promise.all(scrappers.map(async s => await s.scrape()));
 
-    job.on("scheduled", () => {
-        console.info("Job scheduled Successfully");
+    const job = schedule.scheduleJob("Scrape Job", "*/10 * * * *", async () => {
+        await Promise.all(scrappers.map(async s => await s.scrape()));
     });
 
     job.on("run", () => {
-        console.info("Job Executed Successfully");
+        console.info("Job Executed");
     });
 
     job.on("error", () => {
@@ -37,4 +43,4 @@ async function main() {
     });
 }
 
-main();
+main().catch(err => console.error(err));

@@ -15,17 +15,23 @@ export class TelegramConfig {
     }
 }
 
-export class SmsConfig {
+export class TwilioConfig {
     public static Config(): { [key: string]: string; } {
         const env = cleanEnv(process.env, {
             ACCOUNT_SID: str(),
             AUTH_TOKEN: str(),
+            TWILIO_FROM: str(),
+            TWILIO_PHONE_1: str(),
+            TWILIO_PHONE_2: str(),
             NODE_ENV: str({ choices: ["development", "test", "production", "staging"] }),
         });
-
+        
         return {
             accountSid: env.ACCOUNT_SID,
-            channelId: env.AUTH_TOKEN,
+            authToken: env.AUTH_TOKEN,
+            from: env.TWILIO_FROM,
+            to1: env.TWILIO_PHONE_1,
+            to2: env.TWILIO_PHONE_2
         };
     }
 }
